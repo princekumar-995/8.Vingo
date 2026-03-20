@@ -1,190 +1,288 @@
-import React from 'react'
-import Nav from './NaV.JSX'
+import React, { useState, useEffect } from 'react'
+import Nav from './Nav'
 import { useSelector } from 'react-redux'
 import axios from 'axios'
 import { serverUrl } from '../App'
-import { useEffect } from 'react'
-import { useState } from 'react'
 import DeliveryBoyTracking from './DeliveryBoyTracking'
 import { ClipLoader } from 'react-spinners'
+import { Bar, BarChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts'
 
 function DeliveryBoy() {
-  const {userData,socket}=useSelector(state=>state.user)
-  const [currentOrder,setCurrentOrder]=useState()
-  const [showOtpBox,setShowOtpBox]=useState(false)
-  const [availableAssignments,setAvailableAssignments]=useState(null)
-  const [otp,setOtp]=useState("")
-const [deliveryBoyLocation,setDeliveryBoyLocation]=useState(null)
-const [loading,setLoading]=useState(false)
-const [message,setMessage]=useState("")
-  useEffect(()=>{
-if(!socket || userData.role!=="deliveryBoy") return
-let watchId
-if(navigator.geolocation){
-watchId=navigator.geolocation.watchPosition((position)=>{
-    const latitude=position.coords.latitude
-    const longitude=position.coords.longitude
-    setDeliveryBoyLocation({lat:latitude,lon:longitude})
-    socket.emit('updateLocation',{
-      latitude,
-      longitude,
-      userId:userData._id
-    })
-  }),
-  (error)=>{
-    console.log(error)
-  },
-  {
-    enableHighAccuracy:true
-  }
-}
+    const { userData, socket } = useSelector(state => state.user)
+    const [currentOrder, setCurrentOrder] = useState(null)
+    const [availableAssignments, setAvailableAssignments] = useState([])
+    const [showOtpBox, setShowOtpBox] = useState(false)
+    const [otp, setOtp] = useState("")
+    const [todayDeliveries, setTodayDeliveries] = useState([])
+    const [loading, setLoading] = useState(false)
+    const [message, setMessage] = useState("")
+    const [liveLocation, setLiveLocation] = useState(userData?.location?.coordinates || [0, 0]) // 🔥 Local live location
 
-return ()=>{
-  if(watchId)navigator.geolocation.clearWatch(watchId)
-}
+    const fetchInitialData = async () => {
+        setLoading(true)
+        try {
+            // Fetch assignments
+            const assignmentsRes = await axios.get(`${serverUrl}/api/order/assignments`, { withCredentials: true }).catch(err => ({ data: [] }))
+            
+            // 🔥 DUMMY DATA ADDED FOR TESTING
+            const dummyRequest = {
+                assignmentId: "dummy_123",
+                orderId: "dummy_order_123",
+                shopName: "Pizza Hut (Dummy)",
+                deliveryAddress: {
+                    text: "GLA University, Mathura",
+                    latitude: 27.6057,
+                    longitude: 77.5933
+                },
+                items: [{ name: "Cheese Pizza", quantity: 1, price: 350 }],
+                subtotal: 350,
+                isDummy: true
+            };
 
-  },[socket,userData])
+            setAvailableAssignments(assignmentsRes.data.length > 0 ? assignmentsRes.data : [dummyRequest])
 
+            // Fetch current order
+            const currentOrderRes = await axios.get(`${serverUrl}/api/order/current`, { withCredentials: true }).catch(err => ({ data: null }))
+            setCurrentOrder(currentOrderRes.data)
 
-
-
-  const getAssignments=async () => {
-    try {
-      const result=await axios.get(`${serverUrl}/api/order/get-assignments`,{withCredentials:true})
-      
-      setAvailableAssignments(result.data)
-    } catch (error) {
-      console.log(error)
+            // Fetch today deliveries
+            const deliveriesRes = await axios.get(`${serverUrl}/api/order/today-deliveries`, { withCredentials: true }).catch(err => ({ data: [] }))
+            setTodayDeliveries(deliveriesRes.data)
+        } catch (error) {
+            console.error("Fetch initial data error:", error)
+        } finally {
+            setLoading(false)
+        }
     }
-  }
 
-  const getCurrentOrder=async () => {
-     try {
-      const result=await axios.get(`${serverUrl}/api/order/get-current-order`,{withCredentials:true})
-    setCurrentOrder(result.data)
-    } catch (error) {
-      console.log(error)
+    useEffect(() => {
+        if (userData?.role === "deliveryBoy") {
+            fetchInitialData()
+        }
+    }, [userData])
+
+    useEffect(() => {
+        if (!socket || userData.role !== "deliveryBoy") return
+
+        const handleNewAssignment = (data) => {
+            // Check if this assignment is already in the list
+            setAvailableAssignments(prev => {
+                const exists = prev.some(a => a.assignmentId === data.assignmentId)
+                if (exists) return prev
+                return [data, ...prev]
+            })
+        }
+
+        socket.on('deliveryAvailable', handleNewAssignment)
+
+        let watchId
+        if (navigator.geolocation) {
+            watchId = navigator.geolocation.watchPosition((position) => {
+                const { latitude, longitude } = position.coords
+                setLiveLocation([longitude, latitude]) // 🔥 Update local state
+                socket.emit('updateLocation', {
+                    latitude,
+                    longitude,
+                    userId: userData._id
+                })
+            }, (error) => console.error(error), { enableHighAccuracy: true })
+        }
+
+        return () => {
+            socket.off('deliveryAvailable', handleNewAssignment)
+            if (watchId) navigator.geolocation.clearWatch(watchId)
+        }
+    }, [socket, userData])
+
+    const handleAccept = async (assignmentId, isDummy = false) => {
+        if (isDummy) {
+            setCurrentOrder({
+                _id: "dummy_order_123",
+                user: { fullName: "Dummy User", mobile: "9876543210" },
+                shopOrder: {
+                    _id: "dummy_shop_order_123",
+                    shopOrderItems: [{ name: "Cheese Pizza", quantity: 1, price: 350 }],
+                    subtotal: 350,
+                    status: "out of delivery"
+                },
+                deliveryAddress: {
+                    text: "GLA University, Mathura",
+                    latitude: 27.6057,
+                    longitude: 77.5933
+                },
+                isDummy: true
+            });
+            setAvailableAssignments([]);
+            return;
+        }
+        try {
+            await axios.post(`${serverUrl}/api/order/accept/${assignmentId}`, {}, { withCredentials: true })
+            setAvailableAssignments(prev => prev.filter(a => a.assignmentId !== assignmentId))
+            const res = await axios.get(`${serverUrl}/api/order/current`, { withCredentials: true })
+            setCurrentOrder(res.data)
+        } catch (error) {
+            alert(error.response?.data?.message || "Error accepting order")
+        }
     }
-  }
 
-
-  const acceptOrder=async (assignmentId) => {
-    try {
-      const result=await axios.get(`${serverUrl}/api/order/accept-order/${assignmentId}`,{withCredentials:true})
-    console.log(result.data)
-    await getCurrentOrder()
-    } catch (error) {
-      console.log(error)
+    const handleSendOtp = async () => {
+        try {
+            setMessage("Sending OTP...")
+            await axios.post(`${serverUrl}/api/order/send-otp`, {
+                orderId: currentOrder._id,
+                shopOrderId: currentOrder.shopOrder._id
+            }, { withCredentials: true })
+            setShowOtpBox(true)
+            setMessage("OTP sent to customer's email!")
+        } catch (error) {
+            setMessage("Error sending OTP")
+        }
     }
-  }
 
-  useEffect(()=>{
-    socket.on('newAssignment',(data)=>{
-      setAvailableAssignments(prev=>([...prev,data]))
-    })
-    return ()=>{
-      socket.off('newAssignment')
+    const handleVerifyOtp = async () => {
+        if (currentOrder?.isDummy) {
+            if (otp === "1234") {
+                setCurrentOrder(null);
+                setShowOtpBox(false);
+                setOtp("");
+                setMessage("Dummy Order Delivered Successfully! (OTP: 1234)");
+                return;
+            } else {
+                alert("Invalid Dummy OTP. Use 1234");
+                return;
+            }
+        }
+        try {
+            await axios.post(`${serverUrl}/api/order/verify-otp`, {
+                orderId: currentOrder._id,
+                shopOrderId: currentOrder.shopOrder._id,
+                otp
+            }, { withCredentials: true })
+            setCurrentOrder(null)
+            setShowOtpBox(false)
+            setOtp("")
+            setMessage("Order delivered successfully!")
+            fetchInitialData()
+        } catch (error) {
+            alert(error.response?.data?.message || "Invalid OTP")
+        }
     }
-  },[socket])
-  
-  const sendOtp=async () => {
-    setLoading(true)
-    try {
-      const result=await axios.post(`${serverUrl}/api/order/send-delivery-otp`,{
-        orderId:currentOrder._id,shopOrderId:currentOrder.shopOrder._id
-      },{withCredentials:true})
-      setLoading(false)
-       setShowOtpBox(true)
-    console.log(result.data)
-    } catch (error) {
-      console.log(error)
-      setLoading(false)
-    }
-  }
-   const verifyOtp=async () => {
-    setMessage("")
-    try {
-      const result=await axios.post(`${serverUrl}/api/order/verify-delivery-otp`,{
-        orderId:currentOrder._id,shopOrderId:currentOrder.shopOrder._id,otp
-      },{withCredentials:true})
-    console.log(result.data)
-    setMessage(result.data.message)
-    } catch (error) {
-      console.log(error)
-    }
-  }
 
+    if (loading) return <div className='h-screen flex items-center justify-center'><ClipLoader color="#ff4d2d" /></div>
 
+    return (
+        <div className='w-full min-h-screen bg-[#fff9f6] flex flex-col items-center p-4'>
+            <Nav />
+            <div className='w-full max-w-4xl mt-20'>
+                {message && <div className='bg-orange-100 text-orange-700 p-3 rounded-lg mb-4 text-center font-medium'>{message}</div>}
 
- 
+                {currentOrder ? (
+                    <div className='bg-white rounded-2xl shadow-xl p-6 border border-orange-100'>
+                        <h2 className='text-2xl font-bold text-gray-800 mb-4 border-b pb-2'>Active Delivery</h2>
+                        <div className='grid grid-cols-1 md:grid-cols-2 gap-6'>
+                            <div>
+                                <p className='text-sm text-gray-500 uppercase font-bold'>Customer</p>
+                                <p className='text-lg font-medium'>{currentOrder.user.fullName}</p>
+                                <p className='text-gray-600'>{currentOrder.user.mobile}</p>
+                                <p className='mt-3 text-sm text-gray-500 uppercase font-bold'>Address</p>
+                                <p className='text-gray-700'>{currentOrder.deliveryAddress.text}</p>
+                            </div>
+                            <div className='bg-gray-50 p-4 rounded-xl'>
+                                <p className='text-sm text-gray-500 uppercase font-bold mb-2'>Order Items</p>
+                                {currentOrder.shopOrder.shopOrderItems.map((item, idx) => (
+                                    <div key={idx} className='flex justify-between text-sm py-1 border-b border-gray-200 last:border-0'>
+                                        <span>{item.name} x {item.quantity}</span>
+                                        <span className='font-medium'>₹{item.price * item.quantity}</span>
+                                    </div>
+                                ))}
+                                <div className='mt-3 pt-2 border-t border-gray-300 flex justify-between font-bold'>
+                                    <span>Total Amount</span>
+                                    <span className='text-[#ff4d2d]'>₹{currentOrder.shopOrder.subtotal}</span>
+                                </div>
+                            </div>
+                        </div>
 
-  useEffect(()=>{
-getAssignments()
-getCurrentOrder()
-  },[userData])
-  return (
-    <div className='w-screen min-h-screen flex flex-col gap-5 items-center bg-[#fff9f6] overflow-y-auto'>
-      <Nav/>
-      <div className='w-full max-w-[800px] flex flex-col gap-5 items-center'>
-    <div className='bg-white rounded-2xl shadow-md p-5 flex flex-col justify-start items-center w-[90%] border border-orange-100 text-center gap-2'>
-<h1 className='text-xl font-bold text-[#ff4d2d]'>Welcome, {userData.fullName}</h1>
-<p className='text-[#ff4d2d] '><span className='font-semibold'>Latitude:</span> {deliveryBoyLocation?.lat}, <span className='font-semibold'>Longitude:</span> {deliveryBoyLocation?.lon}</p>
-    </div>
-{!currentOrder && <div className='bg-white rounded-2xl p-5 shadow-md w-[90%] border border-orange-100'>
-<h1 className='text-lg font-bold mb-4 flex items-center gap-2'>Available Orders</h1>
+                        <div className='mt-8 flex flex-col gap-4'>
+                            {!showOtpBox ? (
+                                <button 
+                                    onClick={handleSendOtp}
+                                    className='w-full bg-[#ff4d2d] text-white py-4 rounded-xl font-bold text-lg shadow-lg hover:bg-orange-600 transition-all'
+                                >
+                                    Arrived at Customer (Send OTP)
+                                </button>
+                            ) : (
+                                <div className='flex flex-col gap-3'>
+                                    <input 
+                                        type="text" 
+                                        placeholder="Enter 4-digit OTP" 
+                                        value={otp}
+                                        onChange={(e) => setOtp(e.target.value)}
+                                        className='w-full p-4 border-2 border-orange-200 rounded-xl text-center text-2xl tracking-widest focus:border-[#ff4d2d] outline-none'
+                                    />
+                                    <button 
+                                        onClick={handleVerifyOtp}
+                                        className='w-full bg-green-500 text-white py-4 rounded-xl font-bold text-lg shadow-lg hover:bg-green-600 transition-all'
+                                    >
+                                        Verify & Mark Delivered
+                                    </button>
+                                </div>
+                            )}
+                        </div>
+                        
+                        <div className='mt-6 h-64 rounded-xl overflow-hidden border border-gray-200'>
+                            <DeliveryBoyTracking 
+                                deliveryBoyLocation={liveLocation}
+                                customerLocation={[currentOrder.deliveryAddress.longitude, currentOrder.deliveryAddress.latitude]}
+                            />
+                        </div>
+                    </div>
+                ) : (
+                    <div className='space-y-6'>
+                        <div className='bg-white p-6 rounded-2xl shadow-lg border border-gray-100'>
+                            <h2 className='text-xl font-bold text-gray-800 mb-4'>Available Requests ({availableAssignments.length})</h2>
+                            {availableAssignments.length === 0 ? (
+                                <div className='text-center py-10'>
+                                    <p className='text-gray-400 italic'>No delivery requests nearby...</p>
+                                </div>
+                            ) : (
+                                <div className='grid gap-4'>
+                                    {availableAssignments.map((a, idx) => (
+                                        <div key={idx} className='border border-orange-100 p-4 rounded-xl bg-orange-50/30 flex justify-between items-center'>
+                                            <div>
+                                                <p className='font-bold text-gray-800'>{a.shopName}</p>
+                                                <p className='text-sm text-gray-500 truncate max-w-xs'>{a.deliveryAddress.text}</p>
+                                                <p className='text-sm font-bold text-[#ff4d2d]'>Earnings: ₹50</p>
+                                            </div>
+                                            <button 
+                                                onClick={() => handleAccept(a.assignmentId, a.isDummy)}
+                                                className='bg-[#ff4d2d] text-white px-6 py-2 rounded-lg font-bold hover:bg-orange-600 transition-all'
+                                            >
+                                                Accept
+                                            </button>
+                                        </div>
+                                    ))}
+                                </div>
+                            )}
+                        </div>
 
-<div className='space-y-4'>
-{availableAssignments?.length>0
-?
-(
-availableAssignments.map((a,index)=>(
-  <div className='border rounded-lg p-4 flex justify-between items-center' key={index}>
-   <div>
-    <p className='text-sm font-semibold'>{a?.shopName}</p>
-    <p className='text-sm text-gray-500'><span className='font-semibold'>Delivery Address:</span> {a?.deliveryAddress.text}</p>
-<p className='text-xs text-gray-400'>{a.items.length} items | {a.subtotal}</p>
-   </div>
-   <button className='bg-orange-500 text-white px-4 py-1 rounded-lg text-sm hover:bg-orange-600' onClick={()=>acceptOrder(a.assignmentId)}>Accept</button>
-
-  </div>
-))
-):<p className='text-gray-400 text-sm'>No Available Orders</p>}
-</div>
-</div>}
-
-{currentOrder && <div className='bg-white rounded-2xl p-5 shadow-md w-[90%] border border-orange-100'>
-<h2 className='text-lg font-bold mb-3'>📦Current Order</h2>
-<div className='border rounded-lg p-4 mb-3'>
-  <p className='font-semibold text-sm'>{currentOrder?.shopOrder.shop.name}</p>
-  <p className='text-sm text-gray-500'>{currentOrder.deliveryAddress.text}</p>
- <p className='text-xs text-gray-400'>{currentOrder.shopOrder.shopOrderItems.length} items | {currentOrder.shopOrder.subtotal}</p>
-</div>
-
- <DeliveryBoyTracking data={{ 
-  deliveryBoyLocation:deliveryBoyLocation || {
-        lat: userData.location.coordinates[1],
-        lon: userData.location.coordinates[0]
-      },
-      customerLocation: {
-        lat: currentOrder.deliveryAddress.latitude,
-        lon: currentOrder.deliveryAddress.longitude
-      }}} />
-{!showOtpBox ? <button className='mt-4 w-full bg-green-500 text-white font-semibold py-2 px-4 rounded-xl shadow-md hover:bg-green-600 active:scale-95 transition-all duration-200' onClick={sendOtp} disabled={loading}>
-{loading?<ClipLoader size={20} color='white'/> :"Mark As Delivered"}
- </button>:<div className='mt-4 p-4 border rounded-xl bg-gray-50'>
-<p className='text-sm font-semibold mb-2'>Enter Otp send to <span className='text-orange-500'>{currentOrder.user.fullName}</span></p>
-<input type="text" className='w-full border px-3 py-2 rounded-lg mb-3 focus:outline-none focus:ring-2 focus:ring-orange-400' placeholder='Enter OTP' onChange={(e)=>setOtp(e.target.value)} value={otp}/>
-{message && <p className='text-center text-green-400 text-2xl mb-4'>{message}</p>}
-
-<button className="w-full bg-orange-500 text-white py-2 rounded-lg font-semibold hover:bg-orange-600 transition-all" onClick={verifyOtp}>Submit OTP</button>
-  </div>}
-
-  </div>}
-
-
-      </div>
-    </div>
-  )
+                        <div className='bg-white p-6 rounded-2xl shadow-lg border border-gray-100'>
+                            <h2 className='text-xl font-bold text-gray-800 mb-4'>Today's Earnings</h2>
+                            <div className='flex items-center justify-between p-4 bg-green-50 rounded-xl border border-green-100'>
+                                <div>
+                                    <p className='text-sm text-green-600 font-bold uppercase'>Deliveries</p>
+                                    <p className='text-3xl font-black text-green-800'>{todayDeliveries.length}</p>
+                                </div>
+                                <div className='text-right'>
+                                    <p className='text-sm text-green-600 font-bold uppercase'>Total Earned</p>
+                                    <p className='text-3xl font-black text-green-800'>₹{todayDeliveries.length * 50}</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                )}
+            </div>
+        </div>
+    )
 }
 
 export default DeliveryBoy

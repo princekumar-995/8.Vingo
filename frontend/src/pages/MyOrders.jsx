@@ -9,13 +9,21 @@ import { setMyOrders, updateOrderStatus, updateRealtimeOrderStatus } from '../re
 
 function MyOrders() {
   const { userData, myOrders,socket} = useSelector(state => state.user)
+  const { activeShop } = useSelector(state => state.owner)
   const navigate = useNavigate()
-const dispatch=useDispatch()
+  const dispatch=useDispatch()
+
+  const filteredOrders = (userData?.role === 'owner' && activeShop)
+    ? myOrders.filter(order => order.shopOrder?.shop?._id === activeShop._id)
+    : myOrders;
+
   useEffect(()=>{
 socket?.on('newOrder',(data)=>{
-if(data.shopOrders?.owner._id==userData._id){
-dispatch(setMyOrders([data,...myOrders]))
-}
+  // Check if the incoming order belongs to ANY of the owner's shops
+  // For simplicity, we just add it to the general list
+  if (Array.isArray(myOrders)) {
+    dispatch(setMyOrders([data,...myOrders]))
+  }
 })
 
 socket?.on('update-status',({orderId,shopId,status,userId})=>{
@@ -24,17 +32,37 @@ if(userId==userData._id){
 }
 })
 
+socket?.on('orderAccepted', ({ orderId, shopId, deliveryBoy }) => {
+  if (userData.role === 'owner') {
+    // Update the specific order in state with the assigned delivery boy
+    const updatedOrders = myOrders.map(order => {
+      if (order._id === orderId && order.shopOrder.shop._id === shopId) {
+        return {
+          ...order,
+          shopOrder: {
+            ...order.shopOrder,
+            assignedDeliveryBoy: deliveryBoy
+          }
+        }
+      }
+      return order
+    })
+    dispatch(setMyOrders(updatedOrders))
+  }
+})
+
 return ()=>{
   socket?.off('newOrder')
   socket?.off('update-status')
+  socket?.off('orderAccepted')
 }
-  },[socket])
+  },[socket, myOrders, userData._id, dispatch])
 
 
 
   
   return (
-    <div className='"w-full min-h-screen bg-[#fff9f6] flex justify-center px-4'>
+    <div className='w-full min-h-screen bg-[#fff9f6] flex justify-center px-4'>
       <div className='w-full max-w-[800px] p-4'>
 
         <div className='flex items-center gap-[20px] mb-6 '>
@@ -44,7 +72,12 @@ return ()=>{
           <h1 className='text-2xl font-bold  text-start'>My Orders</h1>
         </div>
         <div className='space-y-6'>
-          {myOrders?.map((order,index)=>(
+          {filteredOrders?.length === 0 && (
+            <div className='text-center py-20 bg-white rounded-3xl shadow-sm border border-orange-50'>
+              <p className='text-gray-400 font-medium italic'>No orders found {userData.role === 'owner' ? `for ${activeShop?.name}` : ''}</p>
+            </div>
+          )}
+          {filteredOrders?.map((order,index)=>(
             userData.role=="user" ?
             (
               <UserOrderCard data={order} key={index}/>

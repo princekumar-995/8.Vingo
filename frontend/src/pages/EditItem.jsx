@@ -7,11 +7,11 @@ import { useState } from 'react';
 import { useRef } from 'react';
 import axios from 'axios';
 import { serverUrl } from '../App';
-import { setMyShopData } from '../redux/ownerSlice';
+import { setActiveShop, setMyShops } from '../redux/ownerSlice';
 import { ClipLoader } from 'react-spinners';
 function EditItem() {
     const navigate = useNavigate()
-    const { myShopData } = useSelector(state => state.owner)
+    const { activeShop, myShops } = useSelector(state => state.owner)
   const {itemId}=useParams()
    const [currentItem,setCurrentItem]=useState(null)
     const [name, setName] = useState("")
@@ -48,11 +48,20 @@ function EditItem() {
             formData.append("category",category)
             formData.append("foodType", foodType)
             formData.append("price", price)
+            formData.append("shopId", activeShop._id) // 🔥 Send current shop ID
             if (backendImage) {
                 formData.append("image", backendImage)
             }
             const result = await axios.post(`${serverUrl}/api/item/edit-item/${itemId}`, formData, { withCredentials: true })
-            dispatch(setMyShopData(result.data))
+            
+            // 🔥 Correctly replace the whole shop object in the list
+            const updatedShops = myShops.map(shop => 
+                shop._id === activeShop._id ? result.data : shop
+            )
+            
+            dispatch(setMyShops(updatedShops))
+            dispatch(setActiveShop(result.data))
+
             setLoading(false)
             navigate("/")
         } catch (error) {

@@ -4,15 +4,24 @@ import { FaPen } from "react-icons/fa";
 import { FaTrashAlt } from "react-icons/fa";
 import { useNavigate } from 'react-router-dom';
 import { serverUrl } from '../App';
-import { useDispatch } from 'react-redux';
-import { setMyShopData } from '../redux/ownerSlice';
+import { useDispatch, useSelector } from 'react-redux';
+import { setActiveShop, setMyShops } from '../redux/ownerSlice';
 function OwnerItemCard({data}) {
     const navigate=useNavigate()
     const dispatch=useDispatch()
+    const { activeShop, myShops } = useSelector(state => state.owner)
     const handleDelete=async () => {
       try {
         const result=await axios.get(`${serverUrl}/api/item/delete/${data._id}`,{withCredentials:true})
-        dispatch(setMyShopData(result.data))
+        
+        // 🔥 Correctly replace the whole shop object in the list
+        const updatedShops = myShops.map(shop => 
+            shop._id === activeShop._id ? result.data : shop
+        )
+        
+        dispatch(setMyShops(updatedShops))
+        dispatch(setActiveShop(result.data))
+
       } catch (error) {
         console.log(error)
       }

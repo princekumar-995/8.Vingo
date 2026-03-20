@@ -1,24 +1,16 @@
 import Shop from "../models/shop.model.js";
 import uploadOnCloudinary from "../utils/cloudinary.js";
 
-export const createEditShop=async (req,res) => {
+export const createShop=async (req,res) => {
     try {
        const {name,city,state,address}=req.body
        let image;
        if(req.file){
-        console.log(req.file)
         image=await uploadOnCloudinary(req.file.path)
        } 
-       let shop=await Shop.findOne({owner:req.userId})
-       if(!shop){
-        shop=await Shop.create({
+       const shop=await Shop.create({
         name,city,state,address,image,owner:req.userId
        })
-       }else{
-         shop=await Shop.findByIdAndUpdate(shop._id,{
-        name,city,state,address,image,owner:req.userId
-       },{new:true})
-       }
       
        await shop.populate("owner items")
        return res.status(201).json(shop)
@@ -27,18 +19,33 @@ export const createEditShop=async (req,res) => {
     }
 }
 
-export const getMyShop=async (req,res) => {
+export const editShop=async (req,res) => {
     try {
-        const shop=await Shop.findOne({owner:req.userId}).populate("owner").populate({
+       const {shopId,name,city,state,address}=req.body
+       let image;
+       if(req.file){
+        image=await uploadOnCloudinary(req.file.path)
+       } 
+       const updateData = {name,city,state,address,owner:req.userId}
+       if(image) updateData.image = image
+       const shop=await Shop.findByIdAndUpdate(shopId,updateData,{new:true})
+      
+       await shop.populate("owner items")
+       return res.status(200).json(shop)
+    } catch (error) {
+        return res.status(500).json({message:`edit shop error ${error}`})
+    }
+}
+
+export const getMyShops=async (req,res) => {
+    try {
+        const shops=await Shop.find({owner:req.userId}).populate("owner").populate({
             path:"items",
             options:{sort:{updatedAt:-1}}
         })
-        if(!shop){
-            return null
-        }
-        return res.status(200).json(shop)
+        return res.status(200).json(shops)
     } catch (error) {
-        return res.status(500).json({message:`get my shop error ${error}`})
+        return res.status(500).json({message:`get my shops error ${error}`})
     }
 }
 

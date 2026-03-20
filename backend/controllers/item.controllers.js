@@ -4,14 +4,22 @@ import uploadOnCloudinary from "../utils/cloudinary.js";
 
 export const addItem = async (req, res) => {
     try {
-        const { name, category, foodType, price } = req.body
+        const { name, category, foodType, price, shopId } = req.body
         let image;
         if (req.file) {
             image = await uploadOnCloudinary(req.file.path)
         }
-        const shop = await Shop.findOne({ owner: req.userId })
+        
+        // Find specific shop by ID if provided, else fallback to any shop owned by user
+        let shop;
+        if (shopId) {
+            shop = await Shop.findOne({ _id: shopId, owner: req.userId })
+        } else {
+            shop = await Shop.findOne({ owner: req.userId })
+        }
+
         if (!shop) {
-            return res.status(400).json({ message: "shop not found" })
+            return res.status(400).json({ message: "shop not found or access denied" })
         }
         const item = await Item.create({
             name, category, foodType, price, image, shop: shop._id
@@ -19,12 +27,13 @@ export const addItem = async (req, res) => {
 
         shop.items.push(item._id)
         await shop.save()
-        await shop.populate("owner")
-        await shop.populate({
+        
+        const populatedShop = await Shop.findById(shop._id).populate("owner").populate({
             path: "items",
             options: { sort: { updatedAt: -1 } }
         })
-        return res.status(201).json(shop)
+        
+        return res.status(201).json(populatedShop)
 
     } catch (error) {
         return res.status(500).json({ message: `add item error ${error}` })
@@ -34,7 +43,7 @@ export const addItem = async (req, res) => {
 export const editItem = async (req, res) => {
     try {
         const itemId = req.params.itemId
-        const { name, category, foodType, price } = req.body
+        const { name, category, foodType, price, shopId } = req.body
         let image;
         if (req.file) {
             image = await uploadOnCloudinary(req.file.path)
@@ -42,10 +51,12 @@ export const editItem = async (req, res) => {
         const item = await Item.findByIdAndUpdate(itemId, {
             name, category, foodType, price, image
         }, { new: true })
+        
         if (!item) {
             return res.status(400).json({ message: "item not found" })
         }
-        const shop = await Shop.findOne({ owner: req.userId }).populate({
+
+        const shop = await Shop.findById(shopId || item.shop).populate({
             path: "items",
             options: { sort: { updatedAt: -1 } }
         })
@@ -76,14 +87,21 @@ export const deleteItem = async (req, res) => {
         if (!item) {
             return res.status(400).json({ message: "item not found" })
         }
-        const shop = await Shop.findOne({ owner: req.userId })
-        shop.items = shop.items.filter(i => i !== item._id)
-        await shop.save()
-        await shop.populate({
-            path: "items",
-            options: { sort: { updatedAt: -1 } }
-        })
-        return res.status(200).json(shop)
+        
+        // Find the shop this item belonged to
+        const shop = await Shop.findById(item.shop)
+        if (shop) {
+            shop.items = shop.items.filter(i => i.toString() !== item._id.toString())
+            await shop.save()
+            
+            const populatedShop = await Shop.findById(shop._id).populate({
+                path: "items",
+                options: { sort: { updatedAt: -1 } }
+            })
+            return res.status(200).json(populatedShop)
+        }
+        
+        return res.status(200).json({ message: "Item deleted, but shop not found" })
 
     } catch (error) {
         return res.status(500).json({ message: `delete item error ${error}` })
@@ -130,24 +148,31 @@ export const getItemsByShop=async (req,res) => {
 export const searchItems=async (req,res) => {
     try {
         const {query,city}=req.query
-        if(!query || !city){
-            return null
+        if(!city){
+            return res.status(400).json({message:"city is required"})
         }
+
         const shops=await Shop.find({
             city:{$regex:new RegExp(`^${city}$`, "i")}
-        }).populate('items')
-        if(!shops){
-            return res.status(400).json({message:"shops not found"})
+        })
+        
+        if(!shops || shops.length === 0){
+            return res.status(200).json([])
         }
-        const shopIds=shops.map(s=>s._id)
-        const items=await Item.find({
-            shop:{$in:shopIds},
-            $or:[
-              {name:{$regex:query,$options:"i"}},
-              {category:{$regex:query,$options:"i"}}  
-            ]
 
-        }).populate("shop","name image")
+        const shopIds=shops.map(s=>s._id)
+        
+        let filter = { shop: { $in: shopIds } };
+        
+        // If query is provided and it's NOT just the city name again
+        if (query && query.toLowerCase() !== city.toLowerCase()) {
+            filter.$or = [
+                { name: { $regex: query, $options: "i" } },
+                { category: { $regex: query, $options: "i" } }
+            ];
+        }
+
+        const items = await Item.find(filter).populate("shop", "name image city")
 
         return res.status(200).json(items)
 

@@ -1,21 +1,38 @@
 import express from "express"
 import isAuth from "../middlewares/isAuth.js"
-import { acceptOrder, getCurrentOrder, getDeliveryBoyAssignment, getMyOrders, getOrderById, placeOrder, sendDeliveryOtp, updateOrderStatus, verifyDeliveryOtp, verifyPayment } from "../controllers/order.controllers.js"
+import { 
+    acceptOrder, 
+    getCurrentOrder, 
+    getDeliveryBoyAssignment, 
+    getMyOrders, 
+    getOrderById, 
+    placeOrder, 
+    sendDeliveryOtp, 
+    updateOrderStatus, 
+    verifyDeliveryOtp, 
+    verifyPayment,
+    getTodayDeliveries 
+} from "../controllers/order.controllers.js"
 
+const orderRouter = express.Router()
 
+// User Orders
+orderRouter.post("/place", isAuth, placeOrder)
+orderRouter.post("/verify-payment", isAuth, verifyPayment)
+orderRouter.get("/my-orders", isAuth, getMyOrders)
+orderRouter.get("/:id", isAuth, getOrderById)
 
+// Order Status (Owner)
+orderRouter.put("/status/:orderId/:shopId", isAuth, updateOrderStatus)
 
-const orderRouter=express.Router()
+// Delivery Boy Assignments
+orderRouter.get("/assignments", isAuth, getDeliveryBoyAssignment)
+orderRouter.post("/accept/:assignmentId", isAuth, acceptOrder)
+orderRouter.get("/current", isAuth, getCurrentOrder)
+orderRouter.post("/send-otp", isAuth, sendDeliveryOtp)
+orderRouter.post("/verify-otp", isAuth, verifyDeliveryOtp)
 
-orderRouter.post("/place-order",isAuth,placeOrder)
-orderRouter.post("/verify-payment",isAuth,verifyPayment)
-orderRouter.get("/my-orders",isAuth,getMyOrders)
-orderRouter.get("/get-assignments",isAuth,getDeliveryBoyAssignment)
-orderRouter.get("/get-current-order",isAuth,getCurrentOrder)
-orderRouter.post("/send-delivery-otp",isAuth,sendDeliveryOtp)
-orderRouter.post("/verify-delivery-otp",isAuth,verifyDeliveryOtp)
-orderRouter.post("/update-status/:orderId/:shopId",isAuth,updateOrderStatus)
-orderRouter.get('/accept-order/:assignmentId',isAuth,acceptOrder)
-orderRouter.get('/get-order-by-id/:orderId',isAuth,getOrderById)
+// Stats
+orderRouter.get('/today-deliveries', isAuth, getTodayDeliveries)
 
 export default orderRouter

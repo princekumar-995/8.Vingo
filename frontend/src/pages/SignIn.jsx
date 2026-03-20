@@ -26,7 +26,7 @@ function SignIn() {
      const handleSignIn=async () => {
         setLoading(true)
         try {
-            const result=await axios.post(`${serverUrl}/api/auth/signin`,{
+            const result=await axios.post(`${serverUrl}/api/auth/login`,{
                 email,password
             },{withCredentials:true})
            dispatch(setUserData(result.data))

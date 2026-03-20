@@ -3,14 +3,21 @@ import { createSlice } from "@reduxjs/toolkit";
 const ownerSlice=createSlice({
     name:"owner",
     initialState:{
-        myShopData:null
+        myShops: [],
+        activeShop: null
     },
     reducers:{
-        setMyShopData:(state,action)=>{
-        state.myShopData=action.payload
+        setMyShops:(state,action)=>{
+            state.myShops = action.payload;
+            if (action.payload.length > 0 && !state.activeShop) {
+                state.activeShop = action.payload[0];
+            }
+        },
+        setActiveShop:(state,action)=>{
+            state.activeShop = action.payload;
         }
     }
 })
 
-export const {setMyShopData}=ownerSlice.actions
+export const {setMyShops, setActiveShop}=ownerSlice.actions
 export default ownerSlice.reducer
