@@ -13,6 +13,7 @@ import EditItem from './pages/EditItem'
 import CartPage from './pages/CartPage'
 import CheckOut from './pages/CheckOut'
 import OrderPlaced from './pages/OrderPlaced'
+import AboutUs from './pages/AboutUs'
 import MyOrders from './pages/MyOrders'
 import TrackOrderPage from './pages/TrackOrderPage'
 import Shop from './pages/Shop'
@@ -69,6 +70,7 @@ function App() {
             <Route path='/cart' element={userData ? <CartPage /> : <Navigate to="/signin" />} />
             <Route path='/checkout' element={userData ? <CheckOut /> : <Navigate to="/signin" />} />
             <Route path='/order-placed' element={userData ? <OrderPlaced /> : <Navigate to="/signin" />} />
+            <Route path='/about' element={<AboutUs />} />
             <Route path='/my-orders' element={userData ? <MyOrders /> : <Navigate to="/signin" />} />
             <Route path='/track-order/:orderId' element={userData ? <TrackOrderPage /> : <Navigate to="/signin" />} />
             <Route path='/shop/:shopId' element={userData ? <Shop /> : <Navigate to="/signin" />} />

@@ -6,6 +6,7 @@ import { useNavigate } from 'react-router-dom';
 import { FaPen } from "react-icons/fa";
 import OwnerItemCard from './OwnerItemCard';
 import { setActiveShop } from '../redux/ownerSlice';
+import Footer from './Footer';
 
 function OwnerDashboard() {
   const { myShops, activeShop } = useSelector(state => state.owner)
@@ -112,6 +113,7 @@ function OwnerDashboard() {
           )}
         </div>
       )}
+      <Footer />
     </div>
   )
 }

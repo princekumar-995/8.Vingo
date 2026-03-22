@@ -6,6 +6,7 @@ import { serverUrl } from '../App'
 import DeliveryBoyTracking from './DeliveryBoyTracking'
 import { ClipLoader } from 'react-spinners'
 import { Bar, BarChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts'
+import Footer from './Footer'
 
 function DeliveryBoy() {
     const { userData, socket } = useSelector(state => state.user)
@@ -281,6 +282,7 @@ function DeliveryBoy() {
                     </div>
                 )}
             </div>
+            <Footer />
         </div>
     )
 }

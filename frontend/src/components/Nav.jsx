@@ -287,6 +287,7 @@ import { IoIosSearch } from "react-icons/io";
 import { FiShoppingCart } from "react-icons/fi";
 import { useDispatch, useSelector } from 'react-redux';
 import { RxCross2 } from "react-icons/rx";
+import { motion, AnimatePresence } from 'framer-motion';
 import axios from 'axios';
 import { serverUrl } from '../App';
 import { setSearchItems, setUserData, setCurrentCity } from '../redux/userSlice';
@@ -421,10 +422,27 @@ function Nav() {
                 </>: (
                     <>
                         {userData?.role=="user" &&    
-                        <div className='relative cursor-pointer' onClick={()=>navigate("/cart")}>
-                            <FiShoppingCart size={25} className='text-[#ff4d2d]' />
-                            <span className='absolute right-[-9px] top-[-12px] text-[#ff4d2d]'>{cartItems.length}</span>
-                        </div>}   
+                        <motion.div 
+                            whileHover={{ scale: 1.1 }}
+                            whileTap={{ scale: 0.9 }}
+                            className='relative cursor-pointer group' 
+                            onClick={()=>navigate("/cart")}
+                        >
+                            <FiShoppingCart size={25} className='text-[#ff4d2d] group-hover:drop-shadow-lg transition-all' />
+                            <AnimatePresence>
+                                {cartItems.length > 0 && (
+                                    <motion.span 
+                                        initial={{ scale: 0 }}
+                                        animate={{ scale: 1 }}
+                                        exit={{ scale: 0 }}
+                                        key={cartItems.length}
+                                        className='absolute right-[-10px] top-[-10px] bg-gray-900 text-white text-[10px] font-black w-5 h-5 rounded-full flex items-center justify-center border-2 border-white'
+                                    >
+                                        {cartItems.length}
+                                    </motion.span>
+                                )}
+                            </AnimatePresence>
+                        </motion.div>}   
 
                         <button className='hidden md:block px-3 py-1 rounded-lg bg-[#ff4d2d]/10 text-[#ff4d2d] text-sm font-medium' onClick={()=>navigate("/my-orders")}>
                             My Orders
@@ -433,26 +451,49 @@ function Nav() {
                 )}
 
                 {/* ✅ SAFE FIX */}
-                <div className='w-[40px] h-[40px] rounded-full flex items-center justify-center bg-[#ff4d2d] text-white text-[18px] shadow-xl font-semibold cursor-pointer' onClick={() => setShowInfo(prev => !prev)}>
+                <div className='w-[40px] h-[40px] rounded-full flex items-center justify-center bg-gradient-to-br from-[#ff416c] to-[#ff4b2b] text-white text-[18px] shadow-lg font-black cursor-pointer hover:scale-105 transition-all' onClick={() => setShowInfo(prev => !prev)}>
                     {userData?.fullName?.slice(0, 1)}
                 </div>
 
+                <AnimatePresence>
                 {showInfo && 
-                <div className={`fixed top-[80px] right-[10px] 
-                    ${userData?.role=="deliveryBoy"?"md:right-[20%] lg:right-[40%]":"md:right-[10%] lg:right-[25%]"} 
-                    w-[180px] bg-white shadow-2xl rounded-xl p-[20px] flex flex-col gap-[10px] z-[9999]`}>
+                <motion.div 
+                    initial={{ opacity: 0, y: 20, scale: 0.95 }}
+                    animate={{ opacity: 1, y: 0, scale: 1 }}
+                    exit={{ opacity: 0, y: 20, scale: 0.95 }}
+                    className={`fixed top-[90px] right-[20px] 
+                    ${userData?.role=="deliveryBoy"?"md:right-[20%] lg:right-[40%]":"md:right-[10%] lg:right-[15%]"} 
+                    w-[220px] bg-white/90 backdrop-blur-xl shadow-[0_20px_50px_rgba(0,0,0,0.1)] rounded-[2rem] p-6 flex flex-col gap-4 z-[9999] border border-white/50`}>
 
-                    <div className='text-[17px] font-semibold'>{userData?.fullName}</div>
-
-                    {userData?.role=="user" && 
-                    <div className='md:hidden text-[#ff4d2d] font-semibold cursor-pointer' onClick={()=>navigate("/my-orders")}>
-                        My Orders
-                    </div>}
-
-                    <div className='text-[#ff4d2d] font-semibold cursor-pointer' onClick={handleLogOut}>
-                        Log Out
+                    <div className='flex flex-col'>
+                        <span className='text-[10px] font-black text-gray-400 uppercase tracking-widest'>Logged in as</span>
+                        <div className='text-lg font-black text-gray-900 truncate'>{userData?.fullName}</div>
                     </div>
-                </div>}
+
+                    <div className='h-[1px] bg-gray-100 w-full'></div>
+
+                    <div className='flex flex-col gap-2'>
+                        {userData?.role=="user" && 
+                        <button 
+                            className='flex items-center gap-3 text-gray-600 font-bold hover:text-[#ff4d2d] transition-all p-2 rounded-xl hover:bg-orange-50' 
+                            onClick={()=>{ navigate("/my-orders"); setShowInfo(false); }}
+                        >
+                            <TbReceipt2 size={20} />
+                            <span>My Orders</span>
+                        </button>}
+
+                        <button 
+                            className='flex items-center gap-3 text-red-500 font-bold hover:bg-red-50 transition-all p-2 rounded-xl' 
+                            onClick={handleLogOut}
+                        >
+                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+                            </svg>
+                            <span>Log Out</span>
+                        </button>
+                    </div>
+                </motion.div>}
+                </AnimatePresence>
 
             </div>
         </div>
