@@ -426,15 +426,26 @@ export const acceptOrder = async (req, res) => {
         const order = await Order.findById(assignment.order)
         const shopOrder = order.shopOrders.id(assignment.shopOrderId)
         shopOrder.assignedDeliveryBoy = req.userId
+        shopOrder.status = "picked" // 🔥 Automatically mark as picked when accepted
         await order.save()
 
         const io = req.app.get('io')
         if (io) {
             const populatedDeliveryBoy = await User.findById(req.userId).select("fullName mobile")
+            
+            // Notify Owner
             io.to(shopOrder.owner.toString()).emit("orderAccepted", {
                 orderId: order._id,
                 shopId: shopOrder.shop,
-                deliveryBoy: populatedDeliveryBoy // 🔥 Match frontend key
+                deliveryBoy: populatedDeliveryBoy
+            })
+
+            // Notify User
+            io.to(order.user.toString()).emit("update-status", {
+                orderId: order._id,
+                shopId: shopOrder.shop,
+                status: "picked",
+                deliveryBoy: populatedDeliveryBoy
             })
         }
 

@@ -26,7 +26,7 @@ function Shop() {
 handleShop()
     },[shopId])
   return (
-    <div className='min-h-screen bg-gray-50'>
+    <div className='min-h-screen bg-transparent'>
         <button className='absolute top-4 left-4 z-20 flex items-center gap-2 bg-black/50 hover:bg-black/70 text-white px-3 py-2 rounded-full shadow-md transition' onClick={()=>navigate("/")}>
         <FaArrowLeft />
 <span>Back</span>
@@ -44,8 +44,9 @@ handleShop()
        
         </div>}
 
-<div className='max-w-7xl mx-auto px-6 py-10'>
-<h2 className='flex items-center justify-center gap-3 text-3xl font-bold mb-10 text-gray-800'><FaUtensils color='red'/> Our Menu</h2>
+<div className='w-full subtle-star-pattern bg-white/95 backdrop-blur-[2px]'>
+<div className='max-w-7xl mx-auto px-6 py-16'>
+<h2 className='flex items-center justify-center gap-3 text-3xl font-black mb-12 text-gray-900 uppercase tracking-tight'><FaUtensils className='text-[#ff4d2d]'/> Our Menu</h2>
 
 {items.length>0?(
     <div className='flex flex-wrap justify-center gap-8'>
@@ -53,7 +54,11 @@ handleShop()
             <FoodCard data={item}/>
         ))}
     </div>
-):<p className='text-center text-gray-500 text-lg'>No Items Available</p>}
+):<div className='flex flex-col items-center gap-4 py-20'>
+    <p className='text-center text-gray-400 text-xl font-bold uppercase tracking-tighter'>No Items Available in this shop yet 😔</p>
+    <button onClick={()=>navigate("/")} className='text-[#ff4d2d] font-black uppercase text-xs tracking-widest border-b-2 border-[#ff4d2d] pb-1'>Explore other shops</button>
+</div>}
+</div>
 </div>
 
 

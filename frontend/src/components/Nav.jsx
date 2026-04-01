@@ -340,7 +340,7 @@ function Nav() {
     },[query])
 
     return (
-        <div className='w-full h-[80px] flex items-center justify-between md:justify-center gap-[30px] px-[20px] fixed top-0 z-[9999] bg-[#fff9f6] overflow-visible'>
+        <div className='w-full h-[80px] flex items-center justify-between md:justify-center gap-[30px] px-[20px] fixed top-0 z-[9999] bg-white/10 backdrop-blur-md border-b border-white/10 overflow-visible'>
 
             {showSearch && userData?.role == "user" && 
             <div className='w-[90%] h-[70px] bg-white shadow-xl rounded-lg items-center gap-[20px] flex fixed top-[80px] left-[5%] md:hidden'>

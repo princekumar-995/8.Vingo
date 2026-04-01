@@ -20,13 +20,13 @@ function Footer() {
     ]
 
     return (
-        <footer className='w-full bg-[#1a1a18] text-gray-300 pt-16 pb-8 px-4'>
+        <footer className='w-full bg-[#1a1a18] text-gray-300 pt-10 pb-6 px-4'>
             <div className='max-w-6xl mx-auto'>
-                <div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-12 mb-16'>
+                <div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-12 mb-10'>
                     {/* Brand Section */}
-                    <div className='space-y-6'>
-                        <h2 className='text-4xl font-black text-white'>Vingo</h2>
-                        <p className='text-sm leading-relaxed text-gray-400'>
+                    <div className='space-y-4'>
+                        <h2 className='text-3xl font-black text-white'>Vingo</h2>
+                        <p className='text-xs leading-relaxed text-gray-400'>
                             Delivering happiness at your doorstep 🍔. Experience the best food from top-rated restaurants in your city with ultra-fast delivery.
                         </p>
                         <div className='flex gap-4'>
@@ -35,9 +35,9 @@ function Footer() {
                                     key={index}
                                     href={link}
                                     whileHover={{ y: -5, scale: 1.1 }}
-                                    className={`w-10 h-10 rounded-full bg-white/5 flex items-center justify-center transition-all duration-300 ${color} hover:text-white`}
+                                    className={`w-9 h-9 rounded-full bg-white/5 flex items-center justify-center transition-all duration-300 ${color} hover:text-white`}
                                 >
-                                    <Icon size={18} />
+                                    <Icon size={16} />
                                 </motion.a>
                             ))}
                         </div>
@@ -45,14 +45,14 @@ function Footer() {
 
                     {/* Quick Links */}
                     <div>
-                        <h3 className='text-lg font-bold text-white mb-6 border-b border-white/10 pb-2 w-fit'>Quick Links</h3>
-                        <ul className='space-y-4'>
+                        <h3 className='text-base font-bold text-white mb-4 border-b border-white/10 pb-1 w-fit'>Quick Links</h3>
+                        <ul className='space-y-2'>
                             {quickLinks.map((link, index) => (
                                 <li key={index}>
                                     <motion.button 
                                         onClick={() => link.path !== "#" && navigate(link.path)}
                                         whileHover={{ x: 5 }}
-                                        className='text-sm hover:text-[#ff4d2d] transition-colors cursor-pointer'
+                                        className='text-xs hover:text-[#ff4d2d] transition-colors cursor-pointer'
                                     >
                                         {link.name}
                                     </motion.button>
@@ -63,31 +63,31 @@ function Footer() {
 
                     {/* Contact Info */}
                     <div>
-                        <h3 className='text-lg font-bold text-white mb-6 border-b border-white/10 pb-2 w-fit'>Contact Us</h3>
-                        <ul className='space-y-4'>
+                        <h3 className='text-base font-bold text-white mb-4 border-b border-white/10 pb-1 w-fit'>Contact Us</h3>
+                        <ul className='space-y-3'>
                             <li className='flex items-center gap-3 group cursor-pointer'>
-                                <div className='w-8 h-8 rounded-lg bg-white/5 flex items-center justify-center group-hover:bg-[#ff4d2d]/20 group-hover:text-[#ff4d2d] transition-all'>
-                                    <FaPhoneAlt size={14} />
+                                <div className='w-7 h-7 rounded-lg bg-white/5 flex items-center justify-center group-hover:bg-[#ff4d2d]/20 group-hover:text-[#ff4d2d] transition-all'>
+                                    <FaPhoneAlt size={12} />
                                 </div>
-                                <span className='text-sm'>+91 9508753740</span>
+                                <span className='text-xs'>+91 9508753740</span>
                             </li>
                             <li className='flex items-center gap-3 group cursor-pointer'>
-                                <div className='w-8 h-8 rounded-lg bg-white/5 flex items-center justify-center group-hover:bg-[#ff4d2d]/20 group-hover:text-[#ff4d2d] transition-all'>
-                                    <FaEnvelope size={14} />
+                                <div className='w-7 h-7 rounded-lg bg-white/5 flex items-center justify-center group-hover:bg-[#ff4d2d]/20 group-hover:text-[#ff4d2d] transition-all'>
+                                    <FaEnvelope size={12} />
                                 </div>
-                                <span className='text-sm'>support@vingo.com</span>
+                                <span className='text-xs'>support@vingo.com</span>
                             </li>
                         </ul>
                     </div>
 
                     {/* Office Address */}
                     <div>
-                        <h3 className='text-lg font-bold text-white mb-6 border-b border-white/10 pb-2 w-fit'>Office Address</h3>
+                        <h3 className='text-base font-bold text-white mb-4 border-b border-white/10 pb-1 w-fit'>Office Address</h3>
                         <div className='flex items-start gap-3'>
-                            <div className='w-8 h-8 rounded-lg bg-white/5 flex items-center justify-center text-[#ff4d2d]'>
-                                <FaMapMarkerAlt size={14} />
+                            <div className='w-7 h-7 rounded-lg bg-white/5 flex items-center justify-center text-[#ff4d2d]'>
+                                <FaMapMarkerAlt size={12} />
                             </div>
-                            <p className='text-sm leading-relaxed'>
+                            <p className='text-xs leading-relaxed'>
                                 Sector 12, Connaught Place,<br />
                                 New Delhi - 110001,<br />
                                 India
@@ -97,7 +97,7 @@ function Footer() {
                 </div>
 
                 {/* Bottom Bar */}
-                <div className='pt-8 border-t border-white/5 flex flex-col md:flex-row justify-between items-center gap-4'>
+                <div className='pt-6 border-t border-white/5 flex flex-col md:flex-row justify-between items-center gap-4'>
                     <p className='text-xs text-gray-500 font-medium uppercase tracking-widest'>
                         © 2026 VINGO FOODS. ALL RIGHTS RESERVED.
                     </p>

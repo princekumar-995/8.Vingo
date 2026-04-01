@@ -9,6 +9,8 @@ import axios from 'axios';
 import { serverUrl } from '../App';
 import { setActiveShop, setMyShops } from '../redux/ownerSlice';
 import { ClipLoader } from 'react-spinners';
+import SearchableCategorySelect from '../components/SearchableCategorySelect';
+import { motion } from 'framer-motion';
 function AddItem() {
     const navigate = useNavigate()
     const { activeShop, myShops } = useSelector(state => state.owner)
@@ -68,81 +70,101 @@ function AddItem() {
         }
     }
     return (
-        <div className='flex justify-center flex-col items-center p-6 bg-gradient-to-br from-orange-50 relative to-white min-h-screen'>
-            <div className='absolute top-[20px] left-[20px] z-[10] mb-[10px]' onClick={() => navigate("/")}>
-                <IoIosArrowRoundBack size={35} className='text-[#ff4d2d]' />
+        <div className='flex justify-center flex-col items-center p-6 subtle-star-pattern bg-white/95 backdrop-blur-[2px] min-h-screen pt-20'>
+            <div className='absolute top-8 left-8 z-[10] cursor-pointer hover:scale-110 transition-transform' onClick={() => navigate("/")}>
+                <div className='bg-white shadow-lg p-2 rounded-full border border-gray-100'>
+                    <IoIosArrowRoundBack size={35} className='text-[#ff4d2d]' />
+                </div>
             </div>
 
-            <div className='max-w-lg w-full bg-white shadow-xl rounded-2xl p-8 border border-orange-100'>
-                <div className='flex flex-col items-center mb-6'>
-                    <div className='bg-orange-100 p-4 rounded-full mb-4'>
-                        <FaUtensils className='text-[#ff4d2d] w-16 h-16' />
+            <motion.div 
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                className='max-w-xl w-full bg-white shadow-2xl rounded-[40px] p-10 md:p-12 border border-gray-100 relative overflow-hidden'
+            >
+                <div className="absolute top-0 right-0 w-32 h-32 bg-orange-50/50 rounded-bl-[100px] -mr-10 -mt-10" />
+                
+                <div className='flex flex-col items-center mb-10 relative z-10'>
+                    <div className='bg-orange-50 p-6 rounded-[32px] mb-6 shadow-sm border border-orange-100'>
+                        <FaUtensils className='text-[#ff4d2d] w-12 h-12' />
                     </div>
-                    <div className="text-3xl font-extrabold text-gray-900">
-                        Add Food
-                    </div>
+                    <h1 className="text-4xl font-black text-gray-900 uppercase tracking-tighter text-center">
+                        Add <span className="text-[#ff4d2d]">New Dish</span>
+                    </h1>
+                    <p className="text-gray-400 font-bold text-[10px] uppercase tracking-widest mt-2">To {activeShop?.name} Menu</p>
                 </div>
-                <form className='space-y-5' onSubmit={handleSubmit}>
-                    <div>
-                        <label className='block text-sm font-medium text-gray-700 mb-1'>Name</label>
-                        <input type="text" placeholder='Enter Food Name' className='w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500'
+
+                <form className='space-y-8 relative z-10' onSubmit={handleSubmit}>
+                    <div className="space-y-2">
+                        <label className='block text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1'>Dish Name</label>
+                        <input type="text" placeholder='e.g. Spicy Paneer Pizza' className='w-full px-6 py-4 bg-gray-50 border-2 border-transparent rounded-2xl focus:outline-none focus:border-[#ff4d2d] focus:bg-white transition-all font-bold text-gray-800'
                             onChange={(e) => setName(e.target.value)}
                             value={name}
+                            required
                         />
                     </div>
-                    <div>
-                        <label className='block text-sm font-medium text-gray-700 mb-1'>Food Image</label>
-                        <input type="file" accept='image/*' className='w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500' onChange={handleImage} />
-                        {frontendImage && <div className='mt-4'>
-                            <img src={frontendImage} alt="" className='w-full h-48 object-cover rounded-lg border' />
-                        </div>}
 
-                    </div>
-                    <div>
-                        <label className='block text-sm font-medium text-gray-700 mb-1'>Price</label>
-                        <input type="number" placeholder='0' className='w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500'
+                    <div className="space-y-2">
+                        <label className='block text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1'>Price (₹)</label>
+                        <input type="number" placeholder='Enter price' className='w-full px-6 py-4 bg-gray-50 border-2 border-transparent rounded-2xl focus:outline-none focus:border-[#ff4d2d] focus:bg-white transition-all font-bold text-gray-800'
                             onChange={(e) => setPrice(e.target.value)}
                             value={price}
+                            required
                         />
                     </div>
-                    <div>
-                        <label className='block text-sm font-medium text-gray-700 mb-1'>Select Category</label>
-                        <select className='w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500'
-                            onChange={(e) => setCategory(e.target.value)}
-                            value={category}
 
-                        >
-                            <option value="">select Category</option>
-                            {categories.map((cate, index) => (
-                                <option value={cate} key={index}>{cate}</option>
-                            ))}
-
-                        </select>
-                    </div>
-                    <div>
-                        <label className='block text-sm font-medium text-gray-700 mb-1'>Select Food Type</label>
-                        <select className='w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500'
-                            onChange={(e) => setFoodType(e.target.value)}
-                            value={foodType}
-
-                        >
-                            <option value="veg" >veg</option>
- <option value="non veg" >non veg</option>
-
-
-
-
-                        </select>
+                    <div className="space-y-2">
+                        <label className='block text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1'>Food Image</label>
+                        <div className="relative group">
+                            <input type="file" accept='image/*' className='absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10' onChange={handleImage} />
+                            <div className='w-full px-6 py-10 bg-gray-50 border-2 border-dashed border-gray-200 rounded-3xl flex flex-col items-center justify-center group-hover:border-[#ff4d2d] transition-all'>
+                                <div className="text-gray-400 font-bold text-xs uppercase tracking-widest mb-2">Click to upload photo</div>
+                                <div className="text-[10px] text-gray-300">JPG, PNG or WEBP</div>
+                            </div>
+                        </div>
+                        {frontendImage && (
+                            <motion.div initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} className='mt-6'>
+                                <img src={frontendImage} alt="Preview" className='w-full h-52 object-cover rounded-3xl border-4 border-white shadow-lg' />
+                            </motion.div>
+                        )}
                     </div>
 
-                    <button className='w-full bg-[#ff4d2d] text-white px-6 py-3 rounded-lg font-semibold shadow-md hover:bg-orange-600 hover:shadow-lg transition-all duration-200 cursor-pointer' disabled={loading}>
-                      {loading?<ClipLoader size={20} color='white' />:"Save"}
-                    </button>
+                    <SearchableCategorySelect 
+                        value={category}
+                        onChange={(cat) => setCategory(cat)}
+                        categories={categories}
+                    />
+
+                    <div className="space-y-4">
+                        <label className='block text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1'>Food Type</label>
+                        <div className='flex gap-4'>
+                            <button 
+                                type="button"
+                                onClick={() => setFoodType("veg")}
+                                className={`flex-1 py-4 rounded-2xl font-black uppercase tracking-widest text-xs transition-all border-2 ${foodType === 'veg' ? 'bg-green-50 border-green-500 text-green-600 shadow-md' : 'bg-gray-50 border-transparent text-gray-400 hover:bg-gray-100'}`}
+                            >
+                                🥗 Veg
+                            </button>
+                            <button 
+                                type="button"
+                                onClick={() => setFoodType("non-veg")}
+                                className={`flex-1 py-4 rounded-2xl font-black uppercase tracking-widest text-xs transition-all border-2 ${foodType === 'non-veg' ? 'bg-red-50 border-red-500 text-red-600 shadow-md' : 'bg-gray-50 border-transparent text-gray-400 hover:bg-gray-100'}`}
+                            >
+                                🍗 Non-Veg
+                            </button>
+                        </div>
+                    </div>
+
+                    <motion.button 
+                        whileHover={{ scale: 1.02, y: -2 }}
+                        whileTap={{ scale: 0.98 }}
+                        disabled={loading}
+                        className='w-full bg-gradient-to-r from-[#ff4d2d] to-[#ff7d2d] text-white py-6 rounded-3xl font-black text-lg shadow-[0_20px_40px_rgba(255,77,45,0.3)] hover:shadow-[0_25px_50px_rgba(255,77,45,0.4)] transition-all uppercase tracking-[0.2em] mt-10 disabled:opacity-50'
+                    >
+                        {loading ? <ClipLoader size={20} color='white' /> : "Create Dish"}
+                    </motion.button>
                 </form>
-            </div>
-
-
-
+            </motion.div>
         </div>
     )
 }

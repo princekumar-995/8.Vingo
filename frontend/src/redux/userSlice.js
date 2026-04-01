@@ -3,7 +3,7 @@ import { createSlice, current } from "@reduxjs/toolkit";
 const userSlice = createSlice({
   name: "user",
   initialState: {
-    userData: null,
+    userData: undefined, // undefined means still loading, null means logged out
     currentCity: null,
     currentState: null,
     currentAddress: null,

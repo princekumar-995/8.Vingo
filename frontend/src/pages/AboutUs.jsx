@@ -3,7 +3,6 @@ import { motion } from 'framer-motion'
 import { FaCode, FaUsers, FaChartLine, FaUtensils, FaTruck, FaSmile, FaLayerGroup, FaDatabase, FaPalette, FaRocket, FaCogs, FaCheckCircle } from 'react-icons/fa'
 import { MdOutlineFastfood, MdSettingsSuggest, MdDeliveryDining } from 'react-icons/md'
 import Nav from '../components/Nav'
-import Footer from '../components/Footer'
 import princeImg from '../assets/my img.jpeg'
 import pragatiImg from '../assets/cat.jpeg'
 
@@ -50,27 +49,29 @@ const founders = [
     {
         id: 1,
         name: "Prince Pandey",
-        role: "Founder & Backend / Full Stack Lead",
+        role: " co-Founder & Backend / Full Stack Lead",
         image: princeImg
     },
     {
         id: 2,
         name: "Pragati Bansal",
-        role: "Co-Founder & Frontend / UI-UX Lead",
+        role: "Founder & Frontend / UI-UX Lead",
         image: pragatiImg
     },
     {
         id: 3,
         name: "Ragini Sahu",
-        role: "Co-Founder & Database Engineer",
+        role: " Database Engineer",
         image: "https://api.dicebear.com/7.x/avataaars/svg?seed=Ragini"
     },
     {
         id: 4,
-        name: "Piyush Dhakre",
-        role: "Co-Founder & Product Operations",
+        name: "Priyanshu Dhakre",
+        role: " Product Operations",
         image: "https://api.dicebear.com/7.x/avataaars/svg?seed=Piyush"
-    }
+    },
+    
+
 ]
 
 function AboutUs() {
@@ -270,7 +271,7 @@ function AboutUs() {
             </div>
 
             {/* SECTION 4: FOUNDERS */}
-            <div className="py-24 bg-gray-900 text-white rounded-t-[4rem] md:rounded-t-[6rem]">
+            <div className="py-16 bg-gray-900 text-white rounded-t-[4rem] md:rounded-t-[6rem]">
                 <div className="max-w-6xl mx-auto px-4">
                     <div className="text-center mb-16">
                         <h2 className="text-4xl font-black mb-4 uppercase tracking-widest">Our Team</h2>
@@ -301,8 +302,6 @@ function AboutUs() {
                     </div>
                 </div>
             </div>
-
-            <Footer />
         </div>
     )
 }

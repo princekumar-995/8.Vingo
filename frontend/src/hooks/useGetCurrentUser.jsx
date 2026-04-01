@@ -14,6 +14,7 @@ function useGetCurrentUser() {
   
     } catch (error) {
         console.log(error)
+        dispatch(setUserData(null)) // Explicitly set to null on error (unauthorized)
     }
 }
 fetchUser()
